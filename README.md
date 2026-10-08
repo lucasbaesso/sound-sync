@@ -1,147 +1,140 @@
+<div align="center">
+
+<img src="store/icon-128.png" width="96" height="96" alt="Sound Sync icon">
+
 # Sound Sync
 
-By [Lucas Baesso](https://github.com/lucasbaesso). A Chrome extension that checks whether a music stream's **voice**, **instruments** and **video** are in sync, and tells the streamer exactly what to change in OBS. English and Português (Brasil).
+**Is your music stream in sync?**<br>
+Find out if the voice, lips, instruments and backing track of a live stream line up, and get step-by-step OBS fixes.
 
-It runs in Chrome's side panel next to the stream (Twitch, YouTube, or any tab playing video). Everything is analyzed on the computer; nothing is uploaded.
+[![Latest release](https://img.shields.io/github/v/release/lucasbaesso/sound-sync?label=download&color=2f6fc0)](https://github.com/lucasbaesso/sound-sync/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+![Chrome and Edge](https://img.shields.io/badge/Chrome%20%7C%20Edge-116%2B-4285F4?logo=googlechrome&logoColor=white)
+![English and Português](https://img.shields.io/badge/lang-English%20%7C%20Portugu%C3%AAs-orange)
+![No data sent](https://img.shields.io/badge/privacy-nothing%20uploaded-success)
+
+**English** · [🇧🇷 Português](README.pt-BR.md)
+
+[**Download**](https://github.com/lucasbaesso/sound-sync/releases/latest) · [Install](#install) · [How to use](#how-to-use) · [FAQ](#faq)
+
+<img src="store/en-1-monitor.png" alt="Sound Sync side panel next to a music stream, showing the voice 179 ms behind the lips" width="900">
+
+</div>
+
+## Why
+
+When you stream music, your camera, mic, instruments and backing track all travel through different paths, and each one can arrive a little late. Viewers notice when the singing doesn't match the lips, but it's hard to tell **what** is late and **by how much** while you're the one performing.
+
+Sound Sync watches your stream the way a viewer does, in a browser tab, and tells you in plain words:
+
+> *"The voice is heard 179 ms after the lips move."*
+> **Fix:** In OBS, add a Render Delay of 180 ms to your camera.
+
+## Features
+
+| | |
+|---|---|
+| 🎤 **Voice and lips, live** | Tracks the singer's mouth and compares it with the voice, while the stream plays. |
+| 👏 **Clap test** | Mic vs camera, accurate to about one video frame. |
+| 🎸 **Instrument test** | Instrument input vs camera, with a strike on the strings. |
+| 🎧 **Backing track test** | Voice vs backing track, using a click track. Accurate to about ±1 ms. |
+| 🛠️ **OBS fixes** | Which source to delay (Render Delay or Sync Offset) and by how many milliseconds. Copy the steps with one click. |
+| 🖼️ **Illustrated steps** | Every test explains what to do with pictures, in English and Portuguese. |
+| 🔒 **Private** | Everything is analyzed on your computer. No account, no tracking, no uploads. |
+| ⚙️ **Light on your PC** | Choose whether it may use the graphics card, so your stream or game doesn't stutter. |
+
+Works with **Twitch, YouTube, TikTok, Instagram, Kick, Facebook** and any tab playing video, live or recorded. You can also check an OBS recording by opening the file in a tab.
 
 ## Screenshots
 
 | | |
-|---|---|
-| ![Voice and lips, live](store/en-1-monitor.png) | ![What to change in OBS](store/en-2-fix.png) |
-| **Live:** is the voice in sync with the lips? | **The fix:** which OBS source to delay, and by how much |
-| ![Illustrated sync tests](store/en-3-tests.png) | ![Runs on your computer](store/en-4-privacy.png) |
-| **Sync tests** with illustrated steps | Everything runs on your computer |
+|:---:|:---:|
+| <img src="store/en-2-fix.png" alt="How to fix it in OBS" width="440"> | <img src="store/en-3-tests.png" alt="Illustrated clap test" width="440"> |
+| **How to fix it in OBS** | **Illustrated sync tests** |
 
-<details>
-<summary>Em português</summary>
-
-| | |
-|---|---|
-| ![Voz e lábios ao vivo](store/pt-BR-1-monitor.png) | ![O que mudar no OBS](store/pt-BR-2-fix.png) |
-| ![Testes ilustrados](store/pt-BR-3-tests.png) | ![Roda no seu computador](store/pt-BR-4-privacy.png) |
-
-</details>
-
-The stream in these images is an illustration; the side panel is the real extension.
-
-## What it measures
-
-| | How | Precision |
-|---|---|---|
-| **Clap test** (mic vs camera) | Finds each clap in the picture (hands stop) and in the sound, and pairs them | about one frame; checked end to end within ±5 ms |
-| **Instrument test** (instrument input vs camera) | Same, with a hard hit on the strings while the mic is muted | same |
-| **Backing track test** (voice vs backing track) | A downloadable click track is played through the backing-track player; after two beeps an ear cup is held against the mic, so every click reaches the stream twice. The gap between the copies is exactly how late a voice sung in time with the headphones arrives | ±1 ms end to end |
-| **Live: voice and lips** | Tracks mouth opening (MediaPipe face landmarks) and lines it up with the singing; with AI voice separation on, uses note starts of the separated voice | estimate; needs a visible face singing and ~15 face readings/s |
-| **Voice and backing track (experimental)** | Needs AI voice separation. Every 10 s the worker rebuilds the separated voice, finds the beat grid from the music only and pitched vocal entries from the voice only, and scores each candidate delay over the last 30 s. Songs (told apart by tempo) are combined over the stream (`src/core/backingSession.ts`) | per 30 s window: unreliable (~coin flip); after ~12 songs it answered 56% of the time and was within ±60 ms 90% of those times (median error ~20 ms), on 25 held-out songs with the bundled Spleeter model (97% with the larger MDX-Net model, which couldn't be shipped) |
-| **Live: instruments and hands** | Lines up movement of the playing hand with instrument attacks | estimate; needs a visible strumming hand |
-| **Voice and instruments** | Difference of the two above | estimate |
-
-Live cards show the value from the last few analysis windows when they agree ("now"), the average with its confidence, and a dot per recent window so you can see whether they agree. *Analysis* picks the timing: Fast (8 s windows every 2 s), Normal (10 s every 2.5 s, last 30 s) or Steady (last minute); *Start over* forgets earlier results, which also happens when a VOD jumps.
-
-Offsets are always *sound time minus picture time*: positive means the sound is late. Results say this in plain words ("The voice is heard 140 ms after the lips move") and mark which side is early and which is late.
-
-The fix follows from one rule: OBS can only add delay, so every source is delayed to match the latest one. The camera gets a **Render Delay** filter; audio sources get a **Sync Offset** (Advanced Audio Properties). Test results take priority over live estimates.
+<sub>The stream in these images is an illustration; the side panel is the real extension.</sub>
 
 ## Install
 
-Download the latest **`sound-sync-<version>.zip`** from [Releases](https://github.com/lucasbaesso/sound-sync/releases/latest) and follow the steps there (English and Português). In short: unzip it into a folder you keep, open `chrome://extensions` (or `edge://extensions`), turn on **Developer mode**, click **Load unpacked** and choose that folder.
+> Sound Sync isn't in the Chrome or Edge store yet. Until then, install it from the zip. It takes about a minute.
 
-**Português:** baixe o `.zip` mais recente em [Releases](https://github.com/lucasbaesso/sound-sync/releases/latest), descompacte numa pasta que você vai manter, abra `chrome://extensions` (ou `edge://extensions`), ligue o **Modo do desenvolvedor**, clique em **Carregar sem compactação** e escolha essa pasta.
+1. Download **`sound-sync-<version>.zip`** from the [latest release](https://github.com/lucasbaesso/sound-sync/releases/latest).
+2. Unzip it into a folder you'll keep, for example `Documents\Sound Sync`. Don't delete or move it later: the browser loads the extension from there.
+3. Open `chrome://extensions` in Chrome, or `edge://extensions` in Edge.
+4. Turn on **Developer mode**.
+5. Click **Load unpacked** and choose the folder that contains `manifest.json`.
+6. Click the 🧩 puzzle icon in the toolbar, pin **Sound Sync**, and click it to open the side panel.
 
-## Install (development build)
+**To update:** download the new zip, replace the files in your folder, and click ↻ on Sound Sync in `chrome://extensions`.
+
+## How to use
+
+1. **Open your stream** (live or a VOD) in a tab and play it at normal speed.
+2. In the side panel, click **Choose the stream tab**, pick that tab and keep **Also share tab audio** on.
+3. **Monitor** shows live results after about 20 seconds of singing on camera.
+4. For exact numbers, open **Sync tests** and run the clap, instrument or backing track test while you're live (a private or unlisted test stream works).
+5. Follow **How to fix it in OBS**, then run the test again to confirm.
+
+### What "early" and "late" mean
+
+"Late" means it arrives after it should. If the **voice is late**, viewers see your lips move first and hear the words a moment later. OBS can only add delay, so Sound Sync always tells you to **delay the sources that arrive early** until everything matches the latest one.
+
+Results are *sound minus picture*: **+** means the sound is late, **−** means it's early. Viewers notice early sound sooner than late sound.
+
+| Result | Usually feels | What to do |
+|---|---|---|
+| −40 to +60 ms | In sync | Nothing |
+| −90 to +125 ms | Slightly off | Fix if you can |
+| Beyond that | Clearly out of sync | Follow the OBS steps |
+
+<sub>Thresholds follow the broadcast recommendations EBU R37 and ITU-R BT.1359.</sub>
+
+## FAQ
+
+<details>
+<summary><b>Does it work on my viewers' side or on mine?</b></summary>
+
+Either. It analyzes whatever the tab shows, so it measures what viewers really get. Open your own stream in a tab (on the same or another computer) while you're live, or open a VOD afterwards.
+</details>
+
+<details>
+<summary><b>Can it tell if my voice matches the backing track automatically?</b></summary>
+
+Not reliably in a few seconds: when voice and music are already mixed into one track, there's no reliable way to know where the singer meant to be. Use the **backing track test** for an exact number. An experimental estimate that combines a whole stream (about 12 songs) is in the Monitor tab. The research behind this is in [reports/](reports/).
+</details>
+
+<details>
+<summary><b>Does it slow down my stream?</b></summary>
+
+It's light, but if OBS or a game stutters, turn off **Use the graphics card (GPU)** in Help → Performance. You can also turn off AI voice separation there. Running it on a second computer avoids any impact.
+</details>
+
+<details>
+<summary><b>Is anything uploaded?</b></summary>
+
+No. Picture, sound, face tracking and voice separation are all processed on your computer. The extension blocks every network request. See the [privacy policy](PRIVACY.md).
+</details>
+
+<details>
+<summary><b>Why does it ask to share a tab?</b></summary>
+
+That's how a browser extension gets a tab's picture and sound. The browser asks you which tab to share, and you can stop at any time.
+</details>
+
+## Contributing
+
+Bug reports and ideas are welcome: [open an issue](https://github.com/lucasbaesso/sound-sync/issues). For a timing problem, say which site, whether it was live or a VOD, and what the panel showed (a screenshot helps).
+
+To build from source, run the tests or learn how the measurements work, see **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**.
 
 ```bash
 git clone https://github.com/lucasbaesso/sound-sync.git
 cd sound-sync
 npm install
-npm run fetch-models   # downloads the face model (3.7 MB) and the Spleeter voice/accompaniment models (2 × 20 MB) into models/
-npm run build          # builds the extension into dist/
+npm run fetch-models   # face model and voice separation models
+npm run build          # extension in dist/, load it with "Load unpacked"
 ```
-
-Then in Chrome: `chrome://extensions` → turn on **Developer mode** → **Load unpacked** → choose `dist/`. Pin the extension and click its icon to open the side panel.
-
-Requires Chrome 116 or newer (or Edge). The store package is about 50 MB.
-
-### AI voice separation and performance
-
-Voice separation uses Spleeter 2-stems (Deezer, MIT license; ONNX fp16 export by sherpa-onnx), bundled with the extension. It is light: about 3% of real time on the processor (WebAssembly, measured in Chromium). Help → *Performance*: **Use the graphics card (GPU)** (face tracking and separation; turn it off if OBS or a game stutters) and **AI voice separation** on/off.
-
-Models tried and dropped: MDX-Net Kim_Vocal_2 (no clear license for redistributing the weights) and HT-Demucs (MIT, but its ONNX export needs ~4.6 GB of working memory per 7.8 s chunk, over WebAssembly's 4 GB limit).
-
-## Publishing
-
-`npm run package` builds the production version (no developer tools, no source maps) and writes `release/sound-sync-<version>.zip`. Listing texts, permission justifications and the steps are in [STORE.md](STORE.md); the privacy policy is [PRIVACY.md](PRIVACY.md); link it in the store as https://github.com/lucasbaesso/sound-sync/blob/main/PRIVACY.md. `npm run build:dev` builds the developer version with the recording tools and the `window.soundSync` hook used by `scripts/record.mjs`.
-
-## Use
-
-1. Open the stream (live or VOD) in a tab, at normal speed.
-2. In the side panel, click **Choose the stream tab**, pick that tab, and keep **Also share tab audio** on.
-3. **Monitor** shows live estimates. **Sync tests** walks through the clap, instrument and backing track tests, with illustrations.
-4. To check a recording (for example from OBS), drag the video file into a new Chrome tab, play it, and choose that tab.
-
-## Develop
-
-```bash
-npm run watch       # rebuild on change
-npm run typecheck
-npm test            # unit tests: signal processing, matching, fixes, translations
-npm run e2e         # real Chromium: screenshots of every screen in both languages,
-                    # synthetic streams with known delays through the real pipeline,
-                    # and a check that extension pages can't reach the network
-
-# Developer tools
-node scripts/record.mjs <url> <seconds> <out.json>   # play a stream/VOD/file with the extension, save its signals
-node tests/e2e/separationCheck.mjs <audio.f32> <out.json> [wasm|webgpu]   # run the vocal model in Chromium
-node scripts/face-track.mjs <video.webm> <out.json>   # mouth opening on every frame, exact media times
-npm run store-images                                  # store screenshots and promo tile into store/
-```
-
-The full UI flow through Chrome's real tab sharing needs a visible browser (headless Chromium shares tab audio as silence) and test videos with a known delay:
-
-```bash
-FFMPEG=/path/to/ffmpeg python3 tests/e2e/make_sync_video.py 0   videos/sync0.webm
-FFMPEG=/path/to/ffmpeg python3 tests/e2e/make_sync_video.py 120 videos/sync120.webm
-npx esbuild tests/e2e/makeBackingAudio.ts --bundle --platform=node --format=esm --outfile=/tmp/mba.mjs
-node /tmp/mba.mjs 150 videos/backing150.wav   # then mux with any picture into videos/backing150.webm
-HEADED=1 SYNC_VIDEOS=videos npm run e2e
-```
-
-### Layout
-
-- `src/core/`: signal processing with no browser APIs, fully unit tested (audio features, cross-correlation, event detection, verdicts and OBS fix plan).
-- `src/capture/`: tab capture, clock alignment, face tracking, and the per-frame pipeline.
-- `src/separation/`: the voice-separation worker (STFT, model, features) and its client.
-- `src/sidepanel/`: the Preact UI and the session that drives measurements.
-- `src/content.ts`: on Twitch, YouTube, TikTok, Instagram, Kick and Facebook, reports where the player's picture is (handling fitted and cropped videos) so analysis ignores chat, comments and the rest of the page. Other sites still work, using the whole tab picture.
-- `src/i18n/`: `en.ts` defines every string; `ptBR.ts` must match it (enforced by types and tests).
-
-### What real streams taught us
-
-Measured on a real VOD (singing over a backing track at 20:00, guitar at 46:00):
-
-- A single 15 s window can match lips and voice at a wrong lag by coincidence, because music repeats. Live results therefore average the last minute of windows and base confidence on how many windows agree (`CurveTracker`). On the real clip, the true pairing gave 80–100% agreement at +270 ms; audio from other moments of the same song never passed 56%. A regression test (`tests/realStream.test.ts`) runs on this data when `.temp/fixtures/` has it (kept out of the repository).
-- Lips results need ~15 face readings per second; at 6 they fall apart. The panel warns when face tracking is too slow.
-- Stream timing can change during a stream: the same VOD measured +270 ms at 20:00 and about −15 ms at 46:00.
-- Window length: on the real clips, 10 s windows every 2.5 s gave a first correct result after ~18 s and fewer false results from mismatched audio (4–6%) than 15 s windows every 5 s (30 s, 13%).
-- **Voice vs music can't be measured from the mixed stream** with separated stems, so that estimate was removed. Test: separate a clip into voice and music, rebuild it with the voice moved by a known amount, separate again, measure. On the guitar song the result stayed at about +10 ms whether the voice was moved +150 ms or −100 ms: bleed between the separated stems lines up at 0 ms and wins. On the ballad the song's rhythm adds look-alike answers half a beat and a beat away (−239 and −600 ms around a real value near +135 ms). Use the backing track test (click track) for voice vs backing.
-- Moving the voice by several amounts (±100 to ±250 ms) and re-separating, to keep only answers that move with the voice, also failed: only one of six shifts behaved as expected; the rest stayed in the bleed zone near 0 ms. Subtracting the bleed's predicted shape (each stem's own autocorrelation) left beat-sized look-alikes that didn't move with the voice either.
-- A headphone-to-mic leak would make voice vs backing measurable automatically (the stream would carry each backing note twice), but an averaged-cepstrum search found none in either clip.
-
-### Validating voice vs backing
-
-Ground truth comes from MUSDB18 (research multitracks: real vocal and instrument recordings): the vocal is delayed by known amounts, mixed, AAC-coded, separated by the same model, then analyzed. Tuned on 10 songs, tested with frozen settings on 25 others. Within 20–30 s no method tested beat chance (rhythm grid: false alarms 66–70% at 0 ms; harmony against bass notes: 14% within ±60 ms), which is why the card only gives a stream-level verdict. Beat placement was calibrated on clicks (`ONSET_PLACE`), which cut the median error from ~25–40 ms to 15 ms.
-
-### Timing notes
-
-- Audio and video frame timestamps are mapped to arrival time separately; in Chromium their raw stamps were found up to ~110 ms apart.
-- Chrome drops audio chunks from a full `MediaStreamTrackProcessor` queue; with face tracking on the same thread this lost ~70% of the audio until the queue was deepened to 10 s. `audioGaps` in the status counts breaks.
-- Tab sharing delivers the picture about one frame after the sound. Measured with a video whose sound is exactly in sync, this is 30 ms and is subtracted automatically (`TAB_CAPTURE_BIAS_MS`). The Help tab has a per-computer correction on top of that.
-
-## Questions and problems
-
-Open an issue at https://github.com/lucasbaesso/sound-sync/issues. For a timing problem, say which site, whether it was live or a VOD, and what the panel showed (a screenshot helps).
 
 ## License
 
-[MIT](LICENSE) © Lucas Baesso. Every bundled library and model is open source too (Apache 2.0, MIT, BSD-3-Clause, ISC): see [THIRD_PARTY_NOTICES.txt](public/THIRD_PARTY_NOTICES.txt).
+[MIT](LICENSE) © Lucas Baesso. Bundled libraries and models are open source too (Apache 2.0, MIT, BSD-3-Clause, ISC): see [THIRD_PARTY_NOTICES.txt](public/THIRD_PARTY_NOTICES.txt).
