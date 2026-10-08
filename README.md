@@ -4,6 +4,27 @@ By [Lucas Baesso](https://github.com/lucasbaesso). A Chrome extension that check
 
 It runs in Chrome's side panel next to the stream (Twitch, YouTube, or any tab playing video). Everything is analyzed on the computer; nothing is uploaded.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Voice and lips, live](store/en-1-monitor.png) | ![What to change in OBS](store/en-2-fix.png) |
+| **Live:** is the voice in sync with the lips? | **The fix:** which OBS source to delay, and by how much |
+| ![Illustrated sync tests](store/en-3-tests.png) | ![Runs on your computer](store/en-4-privacy.png) |
+| **Sync tests** with illustrated steps | Everything runs on your computer |
+
+<details>
+<summary>Em português</summary>
+
+| | |
+|---|---|
+| ![Voz e lábios ao vivo](store/pt-BR-1-monitor.png) | ![O que mudar no OBS](store/pt-BR-2-fix.png) |
+| ![Testes ilustrados](store/pt-BR-3-tests.png) | ![Roda no seu computador](store/pt-BR-4-privacy.png) |
+
+</details>
+
+The stream in these images is an illustration; the side panel is the real extension.
+
 ## What it measures
 
 | | How | Precision |
@@ -21,6 +42,12 @@ Live cards show the value from the last few analysis windows when they agree ("n
 Offsets are always *sound time minus picture time*: positive means the sound is late. Results say this in plain words ("The voice is heard 140 ms after the lips move") and mark which side is early and which is late.
 
 The fix follows from one rule: OBS can only add delay, so every source is delayed to match the latest one. The camera gets a **Render Delay** filter; audio sources get a **Sync Offset** (Advanced Audio Properties). Test results take priority over live estimates.
+
+## Install
+
+Download the latest **`sound-sync-<version>.zip`** from [Releases](https://github.com/lucasbaesso/sound-sync/releases/latest) and follow the steps there (English and Português). In short: unzip it into a folder you keep, open `chrome://extensions` (or `edge://extensions`), turn on **Developer mode**, click **Load unpacked** and choose that folder.
+
+**Português:** baixe o `.zip` mais recente em [Releases](https://github.com/lucasbaesso/sound-sync/releases/latest), descompacte numa pasta que você vai manter, abra `chrome://extensions` (ou `edge://extensions`), ligue o **Modo do desenvolvedor**, clique em **Carregar sem compactação** e escolha essa pasta.
 
 ## Install (development build)
 
