@@ -226,6 +226,7 @@ export const ptBR: Messages = {
   'help.tips.visible': 'Mantenha a aba da transmissão visível, com este painel aberto.',
   'help.tips.precision': 'Os resultados têm precisão de mais ou menos um quadro de vídeo (17 a 33 ms).',
   'help.tips.live': 'Os resultados ao vivo precisam de canto claro na câmera e da mão que toca aparecendo. Os testes de sincronia sempre funcionam melhor.',
+  'help.project': 'Código-fonte, dúvidas e relatos de problemas:',
   'help.privacy': 'Tudo é analisado neste computador. Nada é enviado para a internet.',
   'help.correction.title': 'Correção para este computador',
   'help.perf.title': 'Desempenho',

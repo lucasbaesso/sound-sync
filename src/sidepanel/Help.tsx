@@ -10,6 +10,12 @@ export function Help({ snap, session }: { snap: Snapshot; session: Session }) {
         <h3>{t('help.how.title')}</h3>
         <p>{t('help.how.body')}</p>
         <p class="hint">{t('help.privacy')}</p>
+        <p class="hint">
+          {t('help.project')}{' '}
+          <a href="https://github.com/lucasbaesso/sound-sync" target="_blank" rel="noopener">
+            github.com/lucasbaesso/sound-sync
+          </a>
+        </p>
       </section>
       <section class="card">
         <h3>{t('help.earlyLate.title')}</h3>

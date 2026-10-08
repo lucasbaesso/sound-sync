@@ -37,6 +37,11 @@ if (!worker) worker = await context.waitForEvent('serviceworker');
 const id = new URL(worker.url()).host;
 const base = `chrome-extension://${id}`;
 const errors = [];
+// The extension must never talk to the network (see PRIVACY.md).
+const external = [];
+context.on('request', (r) => {
+  if (!/^(chrome-extension|data|blob):/.test(r.url())) external.push(r.url());
+});
 
 const page = await context.newPage();
 page.on('pageerror', (e) => errors.push(String(e)));
@@ -134,7 +139,18 @@ for (const r of reports) {
   if (!ok) failed++;
   console.log(`${ok ? 'PASS' : 'FAIL'} ${r.motion.padEnd(5)} injected ${fmt(r.injectedMs).padStart(7)}  test ${fmt(r.clapOffsetMs).padStart(7)} (${r.clapPairs} hits)  live ${fmt(r.liveOffsetMs).padStart(7)} (conf ${r.liveConfidence?.toFixed(2)})  ${r.fps} fps, face ${r.face}`);
 }
+// Extension pages may not reach the network even when a library tries (MediaPipe's usage logging).
+const blocked = await harness.evaluate(() =>
+  fetch('https://odml.pa.googleapis.com/v1/log', { method: 'POST' }).then(
+    () => false,
+    () => true,
+  ),
+);
+const ownRequests = external.filter((u) => !u.startsWith('https://odml.') || !blocked);
+if (!blocked) console.log('FAIL extension pages can reach the network');
+else console.log('PASS network blocked for extension pages');
+if (external.length) console.log('Requests to the network:\n' + [...new Set(external)].join('\n'));
 if (errors.length) console.log('Page errors:\n' + errors.join('\n'));
 await context.close();
 await rm(work, { recursive: true, force: true });
-if (failed || uiFailed || errors.length) process.exit(1);
+if (failed || uiFailed || errors.length || !blocked || ownRequests.length) process.exit(1);

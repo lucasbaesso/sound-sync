@@ -38,7 +38,7 @@ Experimental: uma estimativa de voz x base ao longo da live inteira (depois de u
 
 **Category:** Tools (Chrome) / Productivity (Edge)
 
-**Images:** 128×128 icon (dist/icons/128.png), at least one 1280×800 screenshot of the side panel next to a stream, and a 440×280 promo tile (Chrome).
+**Images:** 128×128 icon (`dist/icons/128.png`); screenshots `store/<lang>-1…4-*.png` (1280×800) and the promo tile `store/<lang>-promo-440x280.png` (Chrome). Use the `en` set for the English listing and `pt-BR` for Portuguese. Regenerate with `npm run store-images`: the side panel is the real UI; the stream is an illustration and the live result on the first image is demo data.
 
 ## Privacy tab
 
@@ -49,11 +49,13 @@ Experimental: uma estimativa de voz x base ao longo da live inteira (depois de u
 - `storage`: saves the user's settings and sync test results on their computer.
 - Content script on Twitch, YouTube, TikTok, Instagram, Kick and Facebook (`https://www.twitch.tv/*`, `https://www.youtube.com/*`, `https://www.tiktok.com/*`, `https://www.instagram.com/*`, `https://kick.com/*`, `https://www.facebook.com/*`): reads where the live video player is on the page and whether it is playing, so the analysis looks at the stream and not at chat, comments or the rest of the page. It reads nothing else and changes nothing on the page.
 
-**Remote code:** none. All code, WebAssembly and models are inside the package.
+**Remote code:** none. All code, WebAssembly and models are inside the package. The extension's content security policy (`connect-src 'self'`) blocks every network request from its pages, including the usage logging built into MediaPipe.
 
 **Data usage:** the extension does not collect or transmit any user data. Tab audio/video (shared by the user through the browser's own picker) is analyzed locally and never stored or sent. Check: "I do not sell or transfer user data…", "…not used for unrelated purposes", "…not used for creditworthiness".
 
-**Privacy policy URL:** host `PRIVACY.md` publicly (for example a GitHub Pages page or a public gist) and paste its link.
+**Privacy policy URL:** https://github.com/lucasbaesso/sound-sync/blob/main/PRIVACY.md
+
+**Homepage / support URL:** https://github.com/lucasbaesso/sound-sync (support: https://github.com/lucasbaesso/sound-sync/issues)
 
 ## Before each upload
 

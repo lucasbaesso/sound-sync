@@ -1,6 +1,6 @@
 # Sound Sync
 
-A Chrome extension that checks whether a music stream's **voice**, **instruments** and **video** are in sync, and tells the streamer exactly what to change in OBS. English and Português (Brasil).
+By [Lucas Baesso](https://github.com/lucasbaesso). A Chrome extension that checks whether a music stream's **voice**, **instruments** and **video** are in sync, and tells the streamer exactly what to change in OBS. English and Português (Brasil).
 
 It runs in Chrome's side panel next to the stream (Twitch, YouTube, or any tab playing video). Everything is analyzed on the computer; nothing is uploaded.
 
@@ -25,6 +25,8 @@ The fix follows from one rule: OBS can only add delay, so every source is delaye
 ## Install (development build)
 
 ```bash
+git clone https://github.com/lucasbaesso/sound-sync.git
+cd sound-sync
 npm install
 npm run fetch-models   # downloads the face model (3.7 MB) and the Spleeter voice/accompaniment models (2 × 20 MB) into models/
 npm run build          # builds the extension into dist/
@@ -42,7 +44,7 @@ Models tried and dropped: MDX-Net Kim_Vocal_2 (no clear license for redistributi
 
 ## Publishing
 
-`npm run package` builds the production version (no developer tools, no source maps) and writes `release/sound-sync-<version>.zip`. Listing texts, permission justifications and the steps are in [STORE.md](STORE.md); the privacy policy is [PRIVACY.md](PRIVACY.md) (host it publicly and link it in the store). `npm run build:dev` builds the developer version with the recording tools and the `window.soundSync` hook used by `scripts/record.mjs`.
+`npm run package` builds the production version (no developer tools, no source maps) and writes `release/sound-sync-<version>.zip`. Listing texts, permission justifications and the steps are in [STORE.md](STORE.md); the privacy policy is [PRIVACY.md](PRIVACY.md); link it in the store as https://github.com/lucasbaesso/sound-sync/blob/main/PRIVACY.md. `npm run build:dev` builds the developer version with the recording tools and the `window.soundSync` hook used by `scripts/record.mjs`.
 
 ## Use
 
@@ -58,12 +60,14 @@ npm run watch       # rebuild on change
 npm run typecheck
 npm test            # unit tests: signal processing, matching, fixes, translations
 npm run e2e         # real Chromium: screenshots of every screen in both languages,
-                    # plus synthetic streams with known delays through the real pipeline
+                    # synthetic streams with known delays through the real pipeline,
+                    # and a check that extension pages can't reach the network
 
 # Developer tools
 node scripts/record.mjs <url> <seconds> <out.json>   # play a stream/VOD/file with the extension, save its signals
 node tests/e2e/separationCheck.mjs <audio.f32> <out.json> [wasm|webgpu]   # run the vocal model in Chromium
 node scripts/face-track.mjs <video.webm> <out.json>   # mouth opening on every frame, exact media times
+npm run store-images                                  # store screenshots and promo tile into store/
 ```
 
 The full UI flow through Chrome's real tab sharing needs a visible browser (headless Chromium shares tab audio as silence) and test videos with a known delay:
@@ -106,3 +110,11 @@ Ground truth comes from MUSDB18 (research multitracks: real vocal and instrument
 - Audio and video frame timestamps are mapped to arrival time separately; in Chromium their raw stamps were found up to ~110 ms apart.
 - Chrome drops audio chunks from a full `MediaStreamTrackProcessor` queue; with face tracking on the same thread this lost ~70% of the audio until the queue was deepened to 10 s. `audioGaps` in the status counts breaks.
 - Tab sharing delivers the picture about one frame after the sound. Measured with a video whose sound is exactly in sync, this is 30 ms and is subtracted automatically (`TAB_CAPTURE_BIAS_MS`). The Help tab has a per-computer correction on top of that.
+
+## Questions and problems
+
+Open an issue at https://github.com/lucasbaesso/sound-sync/issues. For a timing problem, say which site, whether it was live or a VOD, and what the panel showed (a screenshot helps).
+
+## License
+
+[MIT](LICENSE) © Lucas Baesso. Every bundled library and model is open source too (Apache 2.0, MIT, BSD-3-Clause, ISC): see [THIRD_PARTY_NOTICES.txt](public/THIRD_PARTY_NOTICES.txt).

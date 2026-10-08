@@ -230,6 +230,7 @@ export const en = {
   'help.tips.precision': 'Results are accurate to about one video frame (17 to 33 ms).',
   'help.tips.live': 'Live results need clear singing on camera and a visible playing hand. The sync tests always work better.',
   'help.privacy': 'Everything is analyzed on this computer. Nothing is uploaded.',
+  'help.project': 'Source code, questions and problem reports:',
   'help.correction.title': 'Correction for this computer',
   'help.perf.title': 'Performance',
   'help.gpu': 'Use the graphics card (GPU)',
