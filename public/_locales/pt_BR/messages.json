@@ -1,0 +1,5 @@
+{
+  "extName": { "message": "Sound Sync" },
+  "extDescription": { "message": "Verifica se a voz, os instrumentos e o vídeo de uma live de música estão sincronizados, e mostra como corrigir no OBS." },
+  "actionTitle": { "message": "Abrir o Sound Sync" }
+}

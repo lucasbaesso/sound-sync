@@ -1,0 +1,30 @@
+{
+  "name": "sound-sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that checks whether a stream's voice, instruments and video are in sync.",
+  "type": "module",
+  "scripts": {
+    "fetch-models": "node scripts/fetch-models.mjs",
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "node scripts/build.mjs --dev && node tests/e2e/run.mjs",
+    "build:dev": "node scripts/build.mjs --dev",
+    "package": "node scripts/build.mjs && node scripts/package.mjs"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.1.0",
+    "onnxruntime-web": "^1.30.0",
+    "preact": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.4",
+    "@types/node": "^26.6.4",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.3"
+  }
+}
