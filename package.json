@@ -1,6 +1,6 @@
 {
   "name": "sound-sync",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Chrome extension that checks whether a stream's voice, instruments and video are in sync.",
   "author": "Lucas Baesso (https://github.com/lucasbaesso)",

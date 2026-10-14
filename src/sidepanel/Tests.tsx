@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { useI18n, type MessageKey } from '../i18n';
 import { FixCard, OffsetDiagram, VerdictChip } from './components';
 import { ago, describePair, signedMs } from './format';
-import { CameraViewIll, ClapIll, DownloadTrackIll, EarCupMicIll, HeadphonesPlayIll, MixerIll, MuteStringsIll, RaiseHandIll, StartFirstIll, StrikeIll } from './illustrations';
+import { CameraViewIll, ClapIll, DownloadTrackIll, EarCupMicIll, HeadphonesPlayIll, MixerIll, MuteStringsIll, NoiseFilterIll, PauseIll, RaiseHandIll, StartFirstIll, StrikeIll } from './illustrations';
 import type { Session, Snapshot, TestKind, TestResult } from './session';
 
 export function Tests({ snap, session }: { snap: Snapshot; session: Session }) {
@@ -31,13 +31,11 @@ export function Tests({ snap, session }: { snap: Snapshot; session: Session }) {
   return (
     <div class="stack">
       <p>{t('tests.intro')}</p>
-      {(['clap', 'instrument', 'backing'] as TestKind[]).map((kind) => {
+      {(['clap', 'instrument'] as TestKind[]).map((kind) => {
         const last = snap.results[kind];
         return (
           <section class="card test-card" key={kind}>
-            <div class="test-card-ill">
-              {kind === 'clap' ? <ClapIll label="" /> : kind === 'instrument' ? <StrikeIll label="" /> : <EarCupMicIll label="" beeps={t('ill.twoBeeps')} />}
-            </div>
+            <div class="test-card-ill">{kind === 'clap' ? <ClapIll label="" /> : <StrikeIll label="" />}</div>
             <div class="test-card-body">
               <h3>{t(`tests.${kind}.name` as MessageKey)}</h3>
               <p class="muted">{t(`tests.${kind}.what` as MessageKey)}</p>
@@ -49,6 +47,27 @@ export function Tests({ snap, session }: { snap: Snapshot; session: Session }) {
           </section>
         );
       })}
+      {/* Voice vs backing: two ways to the same measurement, sharing one result. */}
+      <section class="card test-card">
+        <div class="test-card-ill">
+          <EarCupMicIll label="" />
+        </div>
+        <div class="test-card-body">
+          <h3>{t('tests.backingCard.name')}</h3>
+          <p class="muted">{t('tests.backingCard.what')}</p>
+          <p class="hint">
+            {snap.results.backing ? t('tests.lastResult', { result: signedMs(snap.results.backing.offsetMs), time: ago(snap.results.backing.at, t) }) : t('tests.notRun')}
+          </p>
+          <div class="test-card-choices">
+            <button type="button" class="btn btn-primary" onClick={() => setOpen('song')}>
+              {t('tests.backingCard.song')}
+            </button>
+            <button type="button" class="btn" onClick={() => setOpen('backing')}>
+              {t('tests.backingCard.click')}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -56,7 +75,16 @@ export function Tests({ snap, session }: { snap: Snapshot; session: Session }) {
 function Instructions({ kind, snap, session, onBack }: { kind: TestKind; snap: Snapshot; session: Session; onBack: () => void }) {
   const { t } = useI18n();
   const steps: { text: string; extra?: string; ill: preact.JSX.Element; action?: preact.JSX.Element }[] =
-    kind === 'backing'
+    kind === 'song'
+      ? [
+          { text: t('song.step1'), ill: <NoiseFilterIll label={t('song.step1')} mic={t('ill.mixerMic')} suppression={t('ill.noiseSuppression')} gate={t('ill.noiseGate')} /> },
+          { text: t('song.step2'), ill: <HeadphonesPlayIll label={t('song.step2')} /> },
+          { text: t('song.step3'), ill: <StartFirstIll label={t('song.step3')} you={t('ill.you')} stream={t('ill.stream')} delay={t('ill.delay')} /> },
+          { text: t('song.step4'), ill: <EarCupMicIll label={t('song.step4')} /> },
+          { text: t('song.step5'), ill: <PauseIll label={t('song.step5')} text={t('ill.pause')} /> },
+          { text: t('song.step6'), ill: <NoiseFilterIll label={t('song.step6')} mic={t('ill.mixerMic')} suppression={t('ill.noiseSuppression')} gate={t('ill.noiseGate')} on /> },
+        ]
+      : kind === 'backing'
       ? [
           {
             text: t('backing.step1'),
@@ -68,7 +96,7 @@ function Instructions({ kind, snap, session, onBack }: { kind: TestKind; snap: S
             ),
           },
           { text: t('backing.step2'), ill: <HeadphonesPlayIll label={t('backing.step2')} /> },
-          { text: t('backing.step3'), ill: <EarCupMicIll label={t('backing.step3')} beeps={t('ill.twoBeeps')} /> },
+          { text: t('backing.step3'), extra: t('backing.noise'), ill: <EarCupMicIll label={t('backing.step3')} beeps={t('ill.twoBeeps')} /> },
           { text: t('backing.step4'), ill: <StartFirstIll label={t('backing.step4')} you={t('ill.you')} stream={t('ill.stream')} delay={t('ill.delay')} /> },
         ]
       : kind === 'clap'
@@ -130,6 +158,19 @@ function Listening({ snap, session }: { snap: Snapshot; session: Session }) {
         <p class="hint">{t('listen.timeLeft', { s: left })}</p>
         {run.kind === 'backing' ? (
           <p>{t('listen.backingCounts', { found: t(run.trackFound ? 'listen.trackHeard' : 'listen.trackWaiting'), clicks: run.clicks ?? 0 })}</p>
+        ) : run.kind === 'song' ? (
+          <>
+            <p>
+              {t('listen.songCounts', {
+                heard: Math.round(run.heardS ?? 0),
+                copy: run.gapMs ? t('listen.songCopyFound', { ms: Math.round(run.gapMs) }) : t('listen.songCopyWaiting'),
+                pauses: run.pauses ?? 0,
+              })}
+            </p>
+            {(run.heardS ?? 0) > 0 && (
+              <p class="listen-next">{t(!run.gapMs ? 'listen.songNextCup' : run.decided ? 'listen.songNextConfirm' : 'listen.songNextPause')}</p>
+            )}
+          </>
         ) : (
           <p>{t('listen.counts', { sounds: run.sounds, moves: run.moves, pairs: run.pairs })}</p>
         )}
@@ -145,9 +186,11 @@ function Result({ result, snap, onAgain, onDone }: { result: TestResult; snap: S
   const { t } = useI18n();
   const kind = result.kind === 'clap' ? 'voice' : result.kind === 'instrument' ? 'instrument' : 'backing';
   const view = describePair(kind, result.offsetMs, t);
+  const song = result.kind === 'song';
   let problem: string | null = null;
-  if (result.status === 'nothing') problem = t(result.kind === 'backing' ? 'result.noTrack' : 'result.nothing');
-  else if (result.status === 'noMic') problem = t('result.noMic');
+  if (result.status === 'nothing') problem = t(song ? 'result.songNothing' : result.kind === 'backing' ? 'result.noTrack' : 'result.nothing');
+  else if (result.status === 'noMic') problem = t(song ? 'result.songNoMic' : 'result.noMic');
+  else if (result.status === 'noOrder') problem = t('result.songNoOrder', { ms: Math.round(result.gapMs ?? 0) });
   else if (result.status === 'single') problem = t('result.onlyOne');
   else if (result.status === 'unreliable') problem = t('result.unreliable', { ms: Math.round(result.spreadMs * 2) });
   const soundLabel = t(result.kind === 'clap' ? 'lane.mic' : 'lane.instrument');

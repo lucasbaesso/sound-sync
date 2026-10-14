@@ -286,7 +286,8 @@ export function HeadphonesPlayIll({ label }: { label: string }) {
   );
 }
 
-export function EarCupMicIll({ label, beeps }: { label: string; beeps: string }) {
+/** Ear cup held against the mic; `beeps` adds the click track's two cue beeps. */
+export function EarCupMicIll({ label, beeps }: { label: string; beeps?: string }) {
   return (
     <Frame label={label}>
       <line x1="70" y1="112" x2="70" y2="70" />
@@ -298,12 +299,58 @@ export function EarCupMicIll({ label, beeps }: { label: string; beeps: string })
         <path d="M104 30 C150 20, 160 70, 140 104" stroke-width="2.6" />
       </g>
       <path d="M110 44 h-4" stroke={AMBER} />
-      <g stroke={BLUE}>
-        <path d="M148 22 q4 -6 8 0 t8 0" />
-        <path d="M170 22 q4 -6 8 0 t8 0" />
-      </g>
-      <Label x={168} y={40} text={beeps} size={9} />
+      {beeps && (
+        <g>
+          <g stroke={BLUE}>
+            <path d="M148 22 q4 -6 8 0 t8 0" />
+            <path d="M170 22 q4 -6 8 0 t8 0" />
+          </g>
+          <Label x={168} y={40} text={beeps} size={9} />
+        </g>
+      )}
       <path d="M14 46 h30 M38 40 l6 6 l-6 6" stroke={AMBER} />
+    </Frame>
+  );
+}
+
+/** OBS mic filters with noise suppression and the noise gate switched off (eye crossed out) or back on. */
+export function NoiseFilterIll(p: { label: string; mic: string; suppression: string; gate: string; on?: boolean }) {
+  const row = (y: number, text: string) => (
+    <g>
+      <rect x="26" y={y} width="148" height="28" rx="5" fill={FILL} stroke={p.on ? GOOD : 'currentColor'} />
+      <g stroke={p.on ? GOOD : 'currentColor'}>
+        <path d={`M36 ${y + 14} q10 -10 20 0 q-10 10 -20 0 z`} />
+        <circle cx="46" cy={y + 14} r="3" />
+      </g>
+      {!p.on && <line x1="34" y1={y + 23} x2="58" y2={y + 5} stroke={RED} stroke-width="2.6" />}
+      <Label x={64} y={y + 18} text={text} anchor="start" size={10} />
+    </g>
+  );
+  return (
+    <Frame label={p.label}>
+      <rect x="14" y="6" width="172" height="104" rx="8" />
+      <Label x={26} y={24} text={p.mic} anchor="start" size={10} weight={600} />
+      {row(34, p.suppression)}
+      {row(72, p.gate)}
+    </Frame>
+  );
+}
+
+/** Pausing the song for a moment while the ear cup stays on the mic. */
+export function PauseIll(p: { label: string; text: string }) {
+  return (
+    <Frame label={p.label}>
+      <line x1="40" y1="112" x2="40" y2="70" />
+      <line x1="24" y1="112" x2="56" y2="112" />
+      <rect x="28" y="22" width="24" height="50" rx="12" fill={FILL} />
+      <path d="M32 34 h16 M32 42 h16 M32 50 h16" opacity="0.5" />
+      <rect x="54" y="24" width="18" height="40" rx="8" fill={FILL} stroke={AMBER} stroke-width="2.4" />
+      <rect x="96" y="26" width="92" height="56" rx="8" fill={FILL} />
+      <rect x="114" y="42" width="7" height="24" rx="2" fill={BLUE} stroke={BLUE} />
+      <rect x="126" y="42" width="7" height="24" rx="2" fill={BLUE} stroke={BLUE} />
+      <path d="M142 54 h10 M148 49 l5 5 l-5 5" />
+      <path d="M160 44 l14 10 l-14 10 z" fill={BLUE} stroke={BLUE} />
+      <Label x={142} y={100} text={p.text} size={11} weight={600} />
     </Frame>
   );
 }

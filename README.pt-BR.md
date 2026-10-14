@@ -37,7 +37,7 @@ O Sound Sync assiste à sua live como um espectador, numa aba do navegador, e ex
 | 🎤 **Voz e lábios ao vivo** | Acompanha a boca de quem canta e compara com a voz, enquanto a live toca. |
 | 👏 **Teste das palmas** | Microfone x câmera, com precisão de cerca de um quadro de vídeo. |
 | 🎸 **Teste do instrumento** | Entrada do instrumento x câmera, com uma batida nas cordas. |
-| 🎧 **Teste da base** | Voz x base (playback), com uma faixa de cliques. Precisão de cerca de ±1 ms. |
+| 🎧 **Teste da base** | Voz x base (playback), de dois jeitos: **com a sua própria música** (sem baixar nada: encoste o fone no microfone e pause a música duas vezes) ou **com uma faixa de cliques** (precisão de cerca de ±1 ms). |
 | 🛠️ **Correções para o OBS** | Qual fonte atrasar (Atraso de renderização ou Deslocamento de sincronização) e em quantos milissegundos. Copie as instruções com um clique. |
 | 🖼️ **Passo a passo ilustrado** | Cada teste mostra o que fazer com desenhos, em português e inglês. |
 | 🔒 **Privado** | Tudo é analisado no seu computador. Sem conta, sem rastreamento, nada é enviado. |
@@ -73,6 +73,7 @@ Funciona com **Twitch, YouTube, TikTok, Instagram, Kick, Facebook** e qualquer a
 2. No painel lateral, clique em **Escolher a aba da transmissão**, escolha essa aba e deixe ligada a opção de compartilhar o áudio da guia.
 3. O **Monitor** mostra resultados ao vivo depois de uns 20 segundos de canto na câmera.
 4. Para números exatos, abra **Testes** e faça o teste das palmas, do instrumento ou da base durante a live (uma live de teste privada ou não listada serve).
+   Nos testes da base, desligue por um momento a **supressão de ruído** e a **porta de ruído** (noise gate) do microfone (OBS: microfone → Filtros → ícone do olho). Elas podem apagar o som do fone que o teste precisa ouvir.
 5. Siga **Como corrigir no OBS** e faça o teste de novo para confirmar.
 
 ### O que "adiantado" e "atrasado" querem dizer
@@ -100,7 +101,13 @@ Dos dois. Ele analisa o que a aba mostra, então mede o que os espectadores real
 <details>
 <summary><b>Ele descobre sozinho se a minha voz está no tempo da base?</b></summary>
 
-Não de forma confiável em poucos segundos: quando voz e música já estão misturadas numa faixa só, não dá para saber com segurança onde a pessoa queria cantar. Use o **teste da base** para ter um número exato. No Monitor há uma estimativa experimental que junta a live inteira (umas 12 músicas). A pesquisa por trás disso está em [reports/](reports/).
+Não de forma confiável em poucos segundos: quando voz e música já estão misturadas numa faixa só, não dá para saber com segurança onde a pessoa queria cantar. Use o **teste da base** para ter um número exato: com a sua própria música (sem baixar nada) ou com a faixa de cliques. No Monitor há uma estimativa experimental que junta a live inteira (umas 12 músicas). A pesquisa por trás disso está em [reports/](reports/).
+</details>
+
+<details>
+<summary><b>O teste da base diz que não ouviu a cópia pelo microfone. Por quê?</b></summary>
+
+Quase sempre é a supressão de ruído (RNNoise, NVIDIA Broadcast, Krisp) ou a porta de ruído (noise gate) do microfone: elas acham que o som do fone é ruído e apagam. Desligue durante o teste (OBS: microfone → Filtros → clique no ícone do olho), encoste o fone com firmeza no microfone e aumente um pouco o volume do fone. Depois ligue de novo.
 </details>
 
 <details>

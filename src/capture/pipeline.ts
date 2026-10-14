@@ -89,6 +89,8 @@ export class Pipeline {
   private lastTrim = 0;
   private wasPending = true;
   private readers: ReadableStreamDefaultReader<VideoFrame | AudioData>[] = [];
+  /** Receives the raw mono audio on the shared clock while set (the song test needs it). */
+  audioTap: ((mono: Float32Array, startMs: number, sampleRate: number) => void) | null = null;
 
   constructor(
     private readonly stream: MediaStream,
@@ -250,6 +252,7 @@ export class Pipeline {
       this.level.push(f.t, f.level);
     }
     for (const p of out.envelope) this.envelope.push(p.t, p.v);
+    this.audioTap?.(mono, this.clocks.audioTime(data.timestamp), data.sampleRate);
     if (this.separation) {
       const startMs = this.clocks.audioTime(data.timestamp);
       const lag = startMs - (Number.isFinite(this.sepVocalFlux.lastTime) ? this.sepVocalFlux.lastTime : startMs);

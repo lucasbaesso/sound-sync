@@ -257,6 +257,7 @@ main { padding: 12px 12px 32px; display: flex; flex-direction: column; gap: 12px
 .test-card { flex-direction: row; align-items: flex-start; }
 .test-card-ill { flex: 0 0 96px; }
 .test-card-body { flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.test-card-choices { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .step { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -278,6 +279,7 @@ main { padding: 12px 12px 32px; display: flex; flex-direction: column; gap: 12px
 
 .listening { align-items: stretch; }
 .listen-cue { font-size: 16px; font-weight: 600; }
+.listen-next { font-weight: 600; color: var(--accent); }
 .progress { height: 8px; border-radius: 4px; background: var(--raised); overflow: hidden; }
 .progress span { display: block; height: 100%; background: var(--accent); transition: width 0.4s linear; }
 

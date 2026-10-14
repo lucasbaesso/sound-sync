@@ -15,7 +15,7 @@ Build the upload: `npm run fetch-models` (first time), then `npm run package` �
 Sound Sync checks whether a music stream is in sync, right in your browser's side panel.
 
 - Voice and lips: compares the singer's mouth with the voice and tells you which one is late, and by how much.
-- Sync tests with illustrated steps: clap test (mic vs camera), instrument test (instrument vs camera) and backing track test (voice vs backing track, with a click track).
+- Sync tests with illustrated steps: clap test (mic vs camera), instrument test (instrument vs camera) and backing track test (voice vs backing track, with your own song or a click track).
 - Clear OBS instructions: which source to delay (Render Delay, Sync Offset) and by how many milliseconds.
 - Works with Twitch, YouTube, TikTok, Instagram, Kick, Facebook and any tab playing video, live or recorded.
 - Everything runs on your computer: nothing is uploaded. English and Portuguese (Brazil).
@@ -28,7 +28,7 @@ Experimental: an estimate of voice vs backing track over a whole stream (after a
 O Sound Sync verifica se uma live de música está sincronizada, no painel lateral do navegador.
 
 - Voz e lábios: compara a boca de quem canta com a voz e diz qual está atrasado, e quanto.
-- Testes de sincronia com passo a passo ilustrado: teste das palmas (microfone x câmera), teste do instrumento (instrumento x câmera) e teste da base (voz x base, com uma faixa de cliques).
+- Testes de sincronia com passo a passo ilustrado: teste das palmas (microfone x câmera), teste do instrumento (instrumento x câmera) e teste da base (voz x base, com a sua própria música ou uma faixa de cliques).
 - Instruções claras para o OBS: qual fonte atrasar (Atraso de renderização, Deslocamento de sincronização) e em quantos milissegundos.
 - Funciona com Twitch, YouTube, TikTok, Instagram, Kick, Facebook e qualquer aba com vídeo, ao vivo ou gravado.
 - Tudo roda no seu computador: nada é enviado. Em português e inglês.

@@ -30,6 +30,7 @@ export function Help({ snap, session }: { snap: Snapshot; session: Session }) {
           <li>{t('help.tips.visible')}</li>
           <li>{t('help.tips.precision')}</li>
           <li>{t('help.tips.live')}</li>
+          <li>{t('help.tips.noise')}</li>
         </ul>
       </section>
       <section class="card">

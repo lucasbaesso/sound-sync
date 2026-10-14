@@ -3,10 +3,12 @@ import { activeTabId, CaptureError, captureTab, TabWatcher } from '../capture/so
 import { BackingSession, type BackingResult } from '../core/backingSession';
 import { correlationCurve, CurveTracker, type TrackedOffset } from '../core/estimator';
 import { analyzeBackingTest, encodeWav, renderTestTrack } from '../core/backingTest';
+import { SongTest } from '../core/songTest';
 import { detectAudioTransients, detectMotionStops, matchEvents } from '../core/events';
 import type { MessageKey } from '../i18n/en';
 
-export type TestKind = 'clap' | 'instrument' | 'backing';
+/** 'backing': voice vs backing with the click track; 'song': the same with the streamer's own song. */
+export type TestKind = 'clap' | 'instrument' | 'backing' | 'song';
 
 /** AI voice separation on or off (it uses the graphics card when allowed, else the processor). */
 export type SeparationMode = 'on' | 'off';
@@ -15,12 +17,17 @@ export interface TestResult {
   kind: TestKind;
   /** Date.now() when it finished. */
   at: number;
-  /** 'noMic': backing test heard the track but not through the mic. */
-  status: 'ok' | 'unreliable' | 'single' | 'nothing' | 'noMic';
+  /**
+   * 'noMic': backing test heard the track (or song) but not through the mic. 'noOrder': song test
+   * found the gap but not which copy comes first.
+   */
+  status: 'ok' | 'unreliable' | 'single' | 'nothing' | 'noMic' | 'noOrder';
   /** Sound minus picture, ms (positive = sound late). */
   offsetMs: number;
   spreadMs: number;
   takes: number[];
+  /** Song test: size of the gap between the two copies, ms. */
+  gapMs?: number;
 }
 
 export interface TestRun {
@@ -33,6 +40,11 @@ export interface TestRun {
   /** Backing test: whether the test track has been heard, and how many of its clicks. */
   trackFound?: boolean;
   clicks?: number;
+  /** Song test: seconds of song heard, gap found (ms), pauses found and how many decided the order. */
+  heardS?: number;
+  gapMs?: number | null;
+  pauses?: number;
+  decided?: number;
 }
 
 export interface Snapshot {
@@ -103,6 +115,10 @@ export const TAB_CAPTURE_BIAS_MS = 30;
 const TEST_MAX_MS = 35000;
 /** The backing test track is 50 s, plus the stream delay. */
 const BACKING_TEST_MAX_MS = 100000;
+/** The song test: about 10 s of song, 30 s with the ear cup and pauses, plus the stream delay. */
+const SONG_TEST_MAX_MS = 120000;
+/** With one pause that showed the order, wait this long for another before finishing. */
+const SONG_TEST_SETTLE_MS = 15000;
 /** How much history "Save measurements" keeps. */
 const RECORD_KEEP_MS = 20 * 60000;
 const RECORDED = ['mouth', 'vocal', 'onset', 'motion', 'bodyMotion', 'sepVocalFlux', 'sepAccompFlux'] as const;
@@ -166,6 +182,8 @@ export class Session {
   private measureStartedAt = 0;
   private lastMedia: { time: number; at: number } | null = null;
   private testStart = 0;
+  private songTest: SongTest | null = null;
+  private songDecidedAt = 0;
   private recording: Record<string, { t: number[]; v: number[] }> = {};
   private recordingSnaps: RecordingSnapshot[] = [];
   private lastRecordingSnap = 0;
@@ -209,6 +227,7 @@ export class Session {
   }
 
   stop(): void {
+    this.stopSongTest();
     window.clearInterval(this.timer);
     this.timer = undefined;
     if (this.clip?.recorder.state === 'recording') this.clip.recorder.stop();
@@ -231,12 +250,35 @@ export class Session {
   startTest(kind: TestKind): void {
     if (!this.pipeline) return;
     this.testStart = performance.now();
-    const durationMs = kind === 'backing' ? BACKING_TEST_MAX_MS : TEST_MAX_MS;
+    this.stopSongTest();
+    if (kind === 'song') {
+      const test = new SongTest(48000);
+      let rate = 0;
+      let current = test;
+      this.songTest = test;
+      this.songDecidedAt = 0;
+      this.pipeline.audioTap = (mono, startMs, sampleRate) => {
+        // The analysis is built for the stream's sample rate once it's known.
+        if (sampleRate !== rate) {
+          rate = sampleRate;
+          current = new SongTest(sampleRate);
+          this.songTest = current;
+        }
+        current.push(mono, startMs);
+      };
+    }
+    const durationMs = kind === 'backing' ? BACKING_TEST_MAX_MS : kind === 'song' ? SONG_TEST_MAX_MS : TEST_MAX_MS;
     this.update({ test: { kind, elapsedMs: 0, durationMs, sounds: 0, moves: 0, pairs: 0 }, finished: null });
   }
 
   cancelTest(): void {
+    this.stopSongTest();
     this.update({ test: null });
+  }
+
+  private stopSongTest(): void {
+    if (this.pipeline) this.pipeline.audioTap = null;
+    this.songTest = null;
   }
 
   dismissResult(): void {
@@ -545,6 +587,10 @@ export class Session {
       this.tickBackingTest(p, now, from, to, patch);
       return;
     }
+    if (run.kind === 'song') {
+      this.tickSongTest(now, patch);
+      return;
+    }
     const sounds = detectAudioTransients(p.envelope.slice(from, to));
     const moves = detectMotionStops(p.motion.slice(from, to));
     const match = matchEvents(moves, sounds);
@@ -598,6 +644,39 @@ export class Session {
     patch.test = null;
     patch.finished = result;
     if (status === 'ok') {
+      patch.results = { ...this.snap.results, backing: result };
+      chrome.storage.local.set({ results: patch.results });
+    }
+  }
+
+  private lastSongCheck = 0;
+
+  private tickSongTest(now: number, patch: Partial<Snapshot>): void {
+    const run = this.snap.test!;
+    const test = this.songTest;
+    const elapsed = now - this.testStart;
+    // The analysis looks at up to two minutes of audio; every 2 s is plenty.
+    if (!test || (now - this.lastSongCheck < 2000 && elapsed < run.durationMs)) {
+      patch.test = { ...run, elapsedMs: elapsed };
+      return;
+    }
+    this.lastSongCheck = now;
+    const prog = test.progress();
+    if (prog.decided > 0 && !prog.conflicting && !this.songDecidedAt) this.songDecidedAt = now;
+    const done =
+      (prog.decided >= 2 && !prog.conflicting) || (this.songDecidedAt > 0 && now - this.songDecidedAt >= SONG_TEST_SETTLE_MS) || elapsed >= run.durationMs;
+    if (!done) {
+      patch.test = { ...run, elapsedMs: elapsed, heardS: prog.heardS, gapMs: prog.gapMs, pauses: prog.pauses, decided: prog.decided };
+      return;
+    }
+    const res = test.result();
+    this.stopSongTest();
+    // Both copies travel the same capture path, so no capture correction applies here.
+    const result: TestResult = { kind: 'song', at: Date.now(), status: res.status, offsetMs: res.offsetMs, spreadMs: 0, takes: [], gapMs: res.gapMs };
+    patch.test = null;
+    patch.finished = result;
+    if (result.status === 'ok') {
+      // Same measurement as the click-track test: it replaces that result.
       patch.results = { ...this.snap.results, backing: result };
       chrome.storage.local.set({ results: patch.results });
     }

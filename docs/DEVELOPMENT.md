@@ -9,6 +9,7 @@ How Sound Sync measures sync, how to build and test it, and what real streams an
 | **Clap test** (mic vs camera) | Finds each clap in the picture (hands stop) and in the sound, and pairs them | about one frame; checked end to end within ±5 ms |
 | **Instrument test** (instrument input vs camera) | Same, with a hard hit on the strings while the mic is muted | same |
 | **Backing track test** (voice vs backing track) | A downloadable click track is played through the backing-track player; after two beeps an ear cup is held against the mic, so every click reaches the stream twice. The gap between the copies is exactly how late a voice sung in time with the headphones arrives | ±1 ms end to end |
+| **Backing track test with your song** (voice vs backing track, no download) | The streamer plays their own backing song and holds an ear cup on the mic, so the song reaches the stream twice. An averaged cepstrum finds the gap (a copy at delay d is a peak at quefrency d, whatever the music); each quefrency is compared with its own level before the ear cup, so echo effects in the recording don't count. The cepstrum can't tell which copy is first, so the streamer pauses the song twice: next to each pause there is a gap-long stretch with only one copy, and the headphone copy's stretch has far less bass (`src/core/songTest.ts`) | gap ±1 ms; order from the pauses (see below) |
 | **Live: voice and lips** | Tracks mouth opening (MediaPipe face landmarks) and lines it up with the singing; with AI voice separation on, uses note starts of the separated voice | estimate; needs a visible face singing and ~15 face readings/s |
 | **Voice and backing track (experimental)** | Needs AI voice separation. Every 10 s the worker rebuilds the separated voice, finds the beat grid from the music only and pitched vocal entries from the voice only, and scores each candidate delay over the last 30 s. Songs (told apart by tempo) are combined over the stream (`src/core/backingSession.ts`) | per 30 s window: unreliable (~coin flip); after ~12 songs it answered 56% of the time and was within ±60 ms 90% of those times (median error ~20 ms), on 25 held-out songs with the bundled Spleeter model (97% with the larger MDX-Net model, which couldn't be shipped) |
 | **Live: instruments and hands** | Lines up movement of the playing hand with instrument attacks | estimate; needs a visible strumming hand |
@@ -95,6 +96,19 @@ Measured on a real VOD (singing over a backing track at 20:00, guitar at 46:00):
 ### Validating voice vs backing
 
 Ground truth comes from MUSDB18 (research multitracks: real vocal and instrument recordings): the vocal is delayed by known amounts, mixed, AAC-coded, separated by the same model, then analyzed. Tuned on 10 songs, tested with frozen settings on 25 others. Within 20–30 s no method tested beat chance (rhythm grid: false alarms 66–70% at 0 ms; harmony against bass notes: 14% within ±60 ms), which is why the card only gives a stream-level verdict. Beat placement was calibrated on clicks (`ONSET_PLACE`), which cut the median error from ~25–40 ms to 15 ms.
+
+### Validating the song test
+
+Simulated on 10 real multitrack songs (MUSDB18 accompaniments): the headphone copy band-limited to 250 Hz–5 kHz, at −6, −15 and −24 dB, 40–350 ms late or 60–150 ms early, two pauses with and without an 80 ms fade, mic noise, AAC 128k; 360 runs with the ear cup and 60 without.
+
+| Headphone copy | Right | Wrong | No answer (asks for another pause) |
+|---|---|---|---|
+| −6 dB | 103/120 | 0 | 17 |
+| −15 dB | 92/120 | 0 | 28 |
+| −24 dB | 51/120 | 3 | 66 |
+| No ear cup | n/a | 0/60 | all |
+
+The gap alone was right (±3 ms) in 310 of 360 runs. Gaps under ~40 ms are the hardest to order (37% answered); they are within "in sync" anyway. Before choosing the bass rule, two songs with echo effects in the recording gave false answers without an ear cup: requiring one pause edge to look like the headphone copy (≥20 dB less bass) and the other like the direct one removed them. `tests/songTest.test.ts` (synthetic music) and the e2e harness (the same audio through the real capture pipeline in Chromium) guard it.
 
 ### Timing notes
 

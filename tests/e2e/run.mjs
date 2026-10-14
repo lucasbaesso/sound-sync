@@ -67,7 +67,10 @@ for (const lang of ['en', 'pt-BR']) {
   await page.locator('.test-card .btn-primary').nth(1).click();
   await page.screenshot({ path: `${out}/${lang}-instrument.png`, fullPage: true });
   await page.locator('.link-back').click();
-  await page.locator('.test-card .btn-primary').nth(2).click();
+  await page.locator('.test-card-choices .btn-primary').click();
+  await page.screenshot({ path: `${out}/${lang}-song.png`, fullPage: true });
+  await page.locator('.link-back').click();
+  await page.locator('.test-card-choices .btn:not(.btn-primary)').click();
   await page.screenshot({ path: `${out}/${lang}-backing.png`, fullPage: true });
   await tabs.nth(2).click();
   await page.screenshot({ path: `${out}/${lang}-help.png`, fullPage: true });
@@ -78,7 +81,7 @@ for (const lang of ['en', 'pt-BR']) {
 // Sources: video files with a known sound delay (sync0.webm, sync120.webm and backing150.webm in the SYNC_VIDEOS
 // folder, made by make_sync_video.py and makeBackingAudio.ts), played in a shared tab like Twitch.
 let uiFailed = false;
-async function uiTest(name, injectedMs, open, card = 0, timeout = 45000) {
+async function uiTest(name, injectedMs, open, card = '.test-card .btn-primary >> nth=0', timeout = 45000) {
   const panel = await context.newPage();
   panel.on('pageerror', (e) => errors.push(String(e)));
   await panel.goto(`${base}/sidepanel.html`);
@@ -89,7 +92,7 @@ async function uiTest(name, injectedMs, open, card = 0, timeout = 45000) {
   await panel.waitForTimeout(4000);
   await panel.screenshot({ path: `${out}/ui-${name}-running.png`, fullPage: true });
   await panel.locator('.tab').nth(1).click();
-  await panel.locator('.test-card .btn-primary').nth(card).click();
+  await panel.locator(card).click();
   await panel.getByRole('button', { name: 'I’m ready, start listening' }).click();
   await panel.waitForTimeout(3000);
   await panel.screenshot({ path: `${out}/ui-${name}-listening.png`, fullPage: true });
@@ -116,7 +119,7 @@ const shareTab = (url) => async (panel) => {
 if (process.env.HEADED && process.env.SYNC_VIDEOS) {
   for (const d of [0, 120]) await uiTest(`clap-video${d}`, d, shareTab(`${base}/fake-video.html#src=sync${d}.webm`));
   // Backing-track test: the stream carries the test track plus a mic copy 150 ms later.
-  await uiTest('backing150', 150, shareTab(`${base}/fake-video.html#src=backing150.webm`), 2, 110000);
+  await uiTest('backing150', 150, shareTab(`${base}/fake-video.html#src=backing150.webm`), '.test-card-choices .btn:not(.btn-primary)', 110000);
 }
 
 // Synthetic streams through the real pipeline.
@@ -130,9 +133,20 @@ for (const motion of ['clap', 'strum']) {
     reports.push(await harness.evaluate(([d, m]) => window.runSync(d, 16000, m), [delay, motion]));
   }
 }
+// The song test (voice vs backing with the streamer's own song) through the real pipeline.
+for (const [gap, db] of [[150, -6], [-90, -12]]) {
+  const r = await harness.evaluate(([g, d]) => window.runSong(g, d), [gap, db]);
+  reports.push({ song: true, ...r });
+}
 const fmt = (x) => (x === null ? 'none' : `${Math.round(x)} ms`);
 let failed = 0;
 for (const r of reports) {
+  if (r.song) {
+    const ok = r.status === 'ok' && Math.abs(r.offsetMs - r.injectedMs) <= 3;
+    if (!ok) failed++;
+    console.log(`${ok ? 'PASS' : 'FAIL'} song test injected ${fmt(r.injectedMs).padStart(7)}  measured ${r.status} ${fmt(r.offsetMs)} (gap ${fmt(r.gapMs)}, strength ${r.strength.toFixed(0)}, votes ${r.votes.join(',')})`);
+    continue;
+  }
   // Clap motion is judged on the event matcher, strum motion on the live estimator.
   const got = r.motion === 'clap' ? r.clapOffsetMs : r.liveOffsetMs;
   const ok = got !== null && Math.abs(got - r.injectedMs) <= 40;

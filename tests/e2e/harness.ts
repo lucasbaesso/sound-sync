@@ -4,6 +4,8 @@
 import { Pipeline } from '../../src/capture/pipeline';
 import { estimateOffset } from '../../src/core/estimator';
 import { detectAudioTransients, detectMotionStops, matchEvents } from '../../src/core/events';
+import { SongTest, type SongTestResult } from '../../src/core/songTest';
+import { songTestStream } from '../songAudio';
 
 interface Report {
   motion: string;
@@ -113,5 +115,46 @@ async function run(delayMs: number, durationMs: number, motion: 'clap' | 'strum'
   };
 }
 
+/** The song test through the real pipeline: a synthetic song test stream played as tab audio. */
+async function runSong(gapMs: number, copyDb: number): Promise<SongTestResult & { injectedMs: number }> {
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 180;
+  document.body.append(canvas);
+  const g = canvas.getContext('2d')!;
+  const ctx = new AudioContext({ sampleRate: 48000 });
+  await ctx.resume();
+  while (ctx.currentTime < 0.5) await new Promise((r) => setTimeout(r, 50));
+  const dest = ctx.createMediaStreamDestination();
+  const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+  const audio = songTestStream(ctx.sampleRate, { gapMs, copyDb });
+  const buffer = ctx.createBuffer(1, audio.length, ctx.sampleRate);
+  buffer.getChannelData(0).set(audio);
+  let drawing = true;
+  const draw = () => {
+    g.fillStyle = `hsl(${(performance.now() / 20) % 360} 40% 30%)`;
+    g.fillRect(0, 0, 320, 180);
+    if (drawing) requestAnimationFrame(draw);
+  };
+  requestAnimationFrame(draw);
+
+  const pipeline = new Pipeline(stream, () => null, () => {});
+  const test = new SongTest(ctx.sampleRate);
+  pipeline.audioTap = (mono, startMs) => test.push(mono, startMs);
+  pipeline.start();
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(dest);
+  src.start(ctx.currentTime + 1);
+  await new Promise((r) => setTimeout(r, (audio.length / ctx.sampleRate) * 1000 + 2500));
+  const result = test.result();
+  drawing = false;
+  pipeline.stop();
+  await ctx.close();
+  canvas.remove();
+  return { ...result, injectedMs: gapMs };
+}
+
 (window as unknown as { runSync: typeof run }).runSync = run;
+(window as unknown as { runSong: typeof runSong }).runSong = runSong;
 document.title = 'ready';

@@ -37,7 +37,7 @@ Sound Sync watches your stream the way a viewer does, in a browser tab, and tell
 | 🎤 **Voice and lips, live** | Tracks the singer's mouth and compares it with the voice, while the stream plays. |
 | 👏 **Clap test** | Mic vs camera, accurate to about one video frame. |
 | 🎸 **Instrument test** | Instrument input vs camera, with a strike on the strings. |
-| 🎧 **Backing track test** | Voice vs backing track, using a click track. Accurate to about ±1 ms. |
+| 🎧 **Backing track test** | Voice vs backing track, two ways: **with your own song** (no download: hold an ear cup on the mic and pause the song twice) or **with a click track** (accurate to about ±1 ms). |
 | 🛠️ **OBS fixes** | Which source to delay (Render Delay or Sync Offset) and by how many milliseconds. Copy the steps with one click. |
 | 🖼️ **Illustrated steps** | Every test explains what to do with pictures, in English and Portuguese. |
 | 🔒 **Private** | Everything is analyzed on your computer. No account, no tracking, no uploads. |
@@ -73,6 +73,7 @@ Works with **Twitch, YouTube, TikTok, Instagram, Kick, Facebook** and any tab pl
 2. In the side panel, click **Choose the stream tab**, pick that tab and keep **Also share tab audio** on.
 3. **Monitor** shows live results after about 20 seconds of singing on camera.
 4. For exact numbers, open **Sync tests** and run the clap, instrument or backing track test while you're live (a private or unlisted test stream works).
+   For the backing track tests, turn off **noise suppression** and the **noise gate** on your mic for a moment (OBS: mic → Filters → eye icon). They can remove the headphone sound the test listens for.
 5. Follow **How to fix it in OBS**, then run the test again to confirm.
 
 ### What "early" and "late" mean
@@ -100,7 +101,13 @@ Either. It analyzes whatever the tab shows, so it measures what viewers really g
 <details>
 <summary><b>Can it tell if my voice matches the backing track automatically?</b></summary>
 
-Not reliably in a few seconds: when voice and music are already mixed into one track, there's no reliable way to know where the singer meant to be. Use the **backing track test** for an exact number. An experimental estimate that combines a whole stream (about 12 songs) is in the Monitor tab. The research behind this is in [reports/](reports/).
+Not reliably in a few seconds: when voice and music are already mixed into one track, there's no reliable way to know where the singer meant to be. Use the **backing track test** for an exact number: with your own song (no download) or with the click track. An experimental estimate that combines a whole stream (about 12 songs) is in the Monitor tab. The research behind this is in [reports/](reports/).
+</details>
+
+<details>
+<summary><b>The backing track test says it didn't hear the mic copy. Why?</b></summary>
+
+Usually noise suppression (RNNoise, NVIDIA Broadcast, Krisp) or a noise gate on the mic: they treat the headphone sound as noise and remove it. Turn them off during the test (OBS: mic → Filters → click the eye icon), press the ear cup firmly against the mic and turn the headphones up a little. Turn them back on afterwards.
 </details>
 
 <details>
